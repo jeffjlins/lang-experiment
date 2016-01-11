@@ -1,0 +1,9 @@
+.idea/
+*.iml
+target/
+workspace.xml
+.project
+.classpath
+.settings/
+!org.eclipse.jdt.core.prefs
+.DS_Store
