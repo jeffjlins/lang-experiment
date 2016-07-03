@@ -1,0 +1,15 @@
+apply plugin: 'java'
+apply plugin: 'scala'
+apply from: "externals.gradle"
+
+group = "com.gmail.jeffjlins.langexp"
+version = "0.0.1-SNAPSHOT"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.scala-lang:scala-library:${scalaVersion}"
+}

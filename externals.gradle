@@ -1,0 +1,4 @@
+ext {
+    scalaMajorVersion = "2.11"
+    scalaVersion = "2.11.7"
+}

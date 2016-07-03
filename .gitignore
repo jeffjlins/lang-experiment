@@ -7,3 +7,5 @@ workspace.xml
 .settings/
 !org.eclipse.jdt.core.prefs
 .DS_Store
+.gradle/
+build/
