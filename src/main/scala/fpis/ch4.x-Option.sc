@@ -1,3 +1,5 @@
+import scala.util.Try
+
 //import scala.{Option => _, Some => _, Either => _, _} // hide std library `Option`, `Some` and `Either`, since we are writing our own in this chapter
 
 object Worksheet {
@@ -78,18 +80,59 @@ object Worksheet {
       }
 
       //# 4.3
-      def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = sys.error("todo")
+      def map2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = {
+         for (aa <- a; bb <- b) yield f(aa, bb)
+      }
+      def lessNaiveMap2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = {
+         a flatMap { aa =>
+            b map { bb =>
+               f(aa, bb)
+            }
+         }
+      }
+      def naiveMap2[A, B, C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = (a, b) match {
+         case (None, _) => None
+         case (_, None) => None
+         case (Some(l), Some(r)) => Some(f(l, r))
+      }
 
       //# 4.4
-      def sequence[A](a: List[Option[A]]): Option[List[A]] = sys.error("todo")
+      def sequence[A](a: List[Option[A]]): Option[List[A]] = {
+         a.foldRight[Option[List[A]]](Some(Nil)) { (el, acc) =>
+            for (eli <- el; acci <- acc) yield eli :: acci
+         }
+      }
+      def sequenceLessNaive[A](a: List[Option[A]]): Option[List[A]] = {
+         a.foldRight[Option[List[A]]](Some(Nil)) { (el, acc) =>
+            el.flatMap { eli =>
+               acc.map { acci =>
+                  eli :: acci
+               }
+            }
+         }
+      }
+      def sequenceNaive[A](a: List[Option[A]]): Option[List[A]] = a match {
+         case Nil => Some(Nil)
+         case h :: t => h flatMap { x =>
+            sequence(t) map { y =>
+               x :: y
+            }
+         }
+      }
 
       //# 4.5
-      def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = sys.error("todo")
+      def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = {
+         a.foldRight[Option[List[A]]](Some(Nil)) { (el, acc) =>
+            for (eli <- el; acci <- acc) yield eli :: acci
+         }
+      }
+      def traverseNaive[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = {
+         sequence(a map f)
+      }
    }
    //# 4.1
    Some(3).map(_ + 2)
    None.map((x: Int) => x + 2)
-
    Some(3).getOrElse(99)
    None.getOrElse(99)
    Some(3).flatMap(x => if ((x - 2) == 0) None else Some(x - 2))
@@ -109,12 +152,16 @@ object Worksheet {
    Option.lessNaiveVariance(Nil: Seq[Double])
    Option.variance(wik)
    Option.variance(Nil: Seq[Double])
-
    //# 4.3
-
+   Option.map2(Some(3), Some(4))(_ + _)
+   Option.map2(Some(3), None: Option[Int])(_ + _)
    //# 4.4
+   val ol = List(Some(1), Some(3), Some(6))
+   val ol2 = List(Some(1), None, Some(3), Some(6))
+   Option.sequence(ol)
+   Option.sequence(ol2)
 
    //# 4.5
-
-
+   Option.traverse(List(1, 2))(i => if (i > 2) None else Some(i))
+   Option.traverse(List(1, 2, 3))(i => if (i > 2) None else Some(i))
 }
