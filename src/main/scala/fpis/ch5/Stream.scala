@@ -128,7 +128,46 @@ trait Stream[+A] {
     case (Cons(h1, t1), Cons(h2, t2)) => Some( ( (Some(h1()), Some(h2())), (t1(), t2()) ) )
   }
 
-  //def startsWith(s: Stream[A]): Boolean = {}
+  def startsWith[B](s: Stream[B]): Boolean = {
+    this.zipAll(s).foldRight(true) {
+      case (_, false) => false
+      case ((None, Some(_)), _) => false
+      case ((Some(_), None), prev) => prev
+      case ((Some(a), Some(b)), cond) => a == b
+      case default => false
+    }
+  }
+
+  def startsWith2[B](s: Stream[B]): Boolean = {
+    zipAll(s).takeWhile3(_._2.isDefined) forAll {
+      case (h, h2) => h == h2
+    }
+  }
+
+  def tails1: Stream[Stream[A]] = this match {
+    case Cons(h, t) => cons(this, t().tails1)
+    case x @ Empty => x
+  }
+
+  def tails2: Stream[Stream[A]] = unfold(this) {
+    case x @ Cons(h, t) => Some((x, t()))
+    case Empty => None
+  } append Stream(empty)
+
+//  def scanRight[B](z: B)(f: (A, => B) => B): Stream[B] = {
+//    this.foldRight((z, this)) {
+//      case ((el, s @ Cons(h, t)), acc) => (f(el, acc), t)
+//    }
+//  }
+
+  //TODO: did not get this one
+  def scanRight[B](z: B)(f: (A, => B) => B): Stream[B] =
+    foldRight((z, Stream(z)))((a, p0) => {
+      // p0 is passed by-name and used in by-name args in f and cons. So use lazy val to ensure only one evaluation...
+      lazy val p1 = p0
+      val b2 = f(a, p1._1)
+      (b2, cons(b2, p1._2))
+    })._2
 
   //=====================
 
@@ -155,7 +194,6 @@ trait Stream[+A] {
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
   }
 
-  def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -209,7 +247,7 @@ object Stream {
 
 object Example {
   def main(args: Array[String]) {
-
+    ex516
   }
 
   def ex51() = {
@@ -285,6 +323,21 @@ object Example {
     println(Stream("a", "b", "c").zipWith(Stream.constant2("x"))(_ + _).toList3)
     println(Stream.constant2("x").zipWith(Stream("a", "b", "c"))(_ + _).toList3)
     println(Stream(1, 2, 3).zipAll(Stream("a", "b")).toList3)
+  }
+
+  def ex514 = {
+    println(Stream(1, 2, 3, 4, 5, 6).startsWith(Stream(1, 2, 3)))
+    println(Stream(1, 2, 3, 4, 5, 6).startsWith(Stream(1, 2, 4)))
+  }
+
+  def ex515 = {
+    val s = Stream(1, 2, 3, 4, 5, 6)
+    println(s.tails2.map2(_.toList3).toList3)
+  }
+
+  def ex516 = {
+    val s = Stream(1, 2, 3, 4, 5, 6)
+    println(s.scanRight(0)(_ + _).toList3)
   }
 
 }
