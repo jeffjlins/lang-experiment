@@ -41,10 +41,47 @@ object Par {
   def delay[A](fa: => Par[A]): Par[A] =
     es => fa(es)
 
-  def choice[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] =
+  def choice1[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] =
     es =>
       if (run(es)(cond).get) t(es) // Notice we are blocking on the result of `cond`.
       else f(es)
+
+  def choiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = es => {
+      choices(run(es)(n).get)(es)
+    }
+
+  def choice2[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = {
+    val intf = map(cond)({case true => 0; case false => 1})
+    choiceN(intf)( t :: f :: Nil)
+  }
+
+  def choiceMap[K,V](key: Par[K])(choices: Map[K,Par[V]]): Par[V] =
+    es => {
+      val k = run(es)(key).get
+      run(es)(choices(k))
+    }
+
+  // i.e. flatMap
+  def chooser[A,B](pa: Par[A])(choices: A => Par[B]): Par[B] = {
+    es =>
+      val c = run(es)(pa).get
+      run(es)(choices(c))
+  }
+
+  def choice1[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = chooser(cond)({case true => t; case false => f})
+
+  def choiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = chooser(n)(i => choices(i))
+
+  def join[A](a: Par[Par[A]]): Par[A] = {
+    es => {
+      val p = run(es)(a).get
+      run(es)(p)
+    }
+  }
+
+  def flatMap[A,B](pa: Par[A])(choices: A => Par[B]): Par[B] = join(map(pa)(choices))
+
+  //TODO: 7.14 implement join using flatMap
 
   /* Gives us infix syntax for `Par`. */
   implicit def toParOps[A](p: Par[A]): ParOps[A] = new ParOps(p)
