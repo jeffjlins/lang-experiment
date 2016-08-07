@@ -68,9 +68,9 @@ object Par {
       run(es)(choices(c))
   }
 
-  def choice1[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = chooser(cond)({case true => t; case false => f})
+  def choice3[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = chooser(cond)({case true => t; case false => f})
 
-  def choiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = chooser(n)(i => choices(i))
+  def choiceN2[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = chooser(n)(i => choices(i))
 
   def join[A](a: Par[Par[A]]): Par[A] = {
     es => {
